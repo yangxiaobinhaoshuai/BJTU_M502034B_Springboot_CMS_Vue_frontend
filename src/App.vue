@@ -1,78 +1,151 @@
-<script setup lang="ts">
-import { RouterView } from 'vue-router'
+<script lang="ts" setup>
+import { ref } from 'vue'
+import {
+  UserOutlined,
+  VideoCameraOutlined,
+  UploadOutlined,
+  MenuUnfoldOutlined,
+  MenuFoldOutlined
+} from '@ant-design/icons-vue'
+
+const selectedKeys = ref<string[]>(['1'])
+const collapsed = ref<boolean>(false)
+
+
+import { reactive } from 'vue'
+
+interface FormState {
+  username: string;
+  password: string;
+  remember: boolean;
+}
+
+const formState = reactive<FormState>({
+  username: '',
+  password: '',
+  remember: true
+})
+const onFinish = (values: any) => {
+  console.log('Success:', values)
+}
+
+const onFinishFailed = (errorInfo: any) => {
+  console.log('Failed:', errorInfo)
+}
 </script>
 
 <template>
-  <header>
-    <!--    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />-->
-    <div class="wrapper">
-      <input>
-    </div>
-  </header>
+  <a-layout>
+    <a-layout-sider v-model:collapsed="collapsed" collapsible>
+      <div class="logo" />
+      <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
+        <a-menu-item key="1">
+          <user-outlined />
+          <span>按年龄范围查询</span>
+        </a-menu-item>
+        <a-menu-item key="2">
+          <video-camera-outlined />
+          <span>按里程范围查询</span>
+        </a-menu-item>
+        <a-menu-item key="3">
+          <upload-outlined />
+          <span>按飞行时间范围查询</span>
+        </a-menu-item>
+      </a-menu>
+    </a-layout-sider>
+    <a-layout>
+      <!-- TODO-->
+<!--      <a-layout-header style="background: #f2f; padding: 0">-->
+<!--        <menu-unfold-outlined-->
+<!--          v-if="collapsed"-->
+<!--          class="trigger"-->
+<!--          @click="() => (collapsed = !collapsed)"-->
+<!--        />-->
+<!--        <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />-->
+<!--      </a-layout-header>-->
 
-  <RouterView />
+
+      <!-- TODO bg color-->
+      <a-layout-content
+        :style="{ height: '100vh', width: '80vw',margin: '24px 16px', padding: '24px', background: '#0ff', minHeight: '100%' }">
+        <a-form
+          :model="formState"
+          name="basic"
+          :label-col="{ span: 8 }"
+          :wrapper-col="{ span: 16 }"
+          autocomplete="off"
+          @finish="onFinish"
+          @finishFailed="onFinishFailed"
+          :style="{height: '30vh', width: '30vw',}"
+        >
+          <a-form-item
+            label="from"
+            name="from"
+            :rules="[{ required: true, message: 'Please input from data!' }]"
+          >
+            <a-input v-model:value="formState.username" />
+          </a-form-item>
+
+          <a-form-item
+            label="to"
+            name="to"
+            :rules="[{ required: true, message: 'Please input to data!' }]"
+          >
+            <a-input v-model:value="formState.username" />
+          </a-form-item>
+
+          <div class="horizontalContain" :style="{marginLeft: '156px',marginRight:'20px'}">
+
+            <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
+              <a-button type="primary" html-type="submit">历史记录</a-button>
+            </a-form-item>
+
+            <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
+              <a-button type="primary" html-type="submit">查询</a-button>
+            </a-form-item>
+          </div>
+
+        </a-form>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<style>
+.horizontalContain {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
   width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+#components-layout-demo-custom-trigger .trigger {
+  font-size: 18px;
+  line-height: 64px;
+  padding: 0 24px;
+  cursor: pointer;
+  transition: color 0.3s;
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+#components-layout-demo-custom-trigger .trigger:hover {
+  color: #1890ff;
 }
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+#components-layout-demo-custom-trigger .logo {
+  height: 132px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 16px;
 }
 
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+.site-layout .site-layout-background {
+  background: #fff;
 }
 </style>
+
