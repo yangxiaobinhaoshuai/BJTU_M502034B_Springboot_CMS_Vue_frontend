@@ -54,16 +54,6 @@ const onFinishFailed = (errorInfo: any) => {
       </a-menu>
     </a-layout-sider>
     <a-layout>
-      <!-- TODO-->
-<!--      <a-layout-header style="background: #f2f; padding: 0">-->
-<!--        <menu-unfold-outlined-->
-<!--          v-if="collapsed"-->
-<!--          class="trigger"-->
-<!--          @click="() => (collapsed = !collapsed)"-->
-<!--        />-->
-<!--        <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />-->
-<!--      </a-layout-header>-->
-
 
       <!-- TODO bg color-->
       <a-layout-content
@@ -78,23 +68,16 @@ const onFinishFailed = (errorInfo: any) => {
           @finishFailed="onFinishFailed"
           :style="{height: '30vh', width: '30vw',}"
         >
-          <a-form-item
-            label="from"
-            name="from"
-            :rules="[{ required: true, message: 'Please input from data!' }]"
-          >
-            <a-input v-model:value="formState.username" />
-          </a-form-item>
+          <a-typography-text :style="{marginLeft: '200px',marginRight:'20px'}">
+            查询范围
+          </a-typography-text>
 
-          <a-form-item
-            label="to"
-            name="to"
-            :rules="[{ required: true, message: 'Please input to data!' }]"
-          >
-            <a-input v-model:value="formState.username" />
-          </a-form-item>
 
-          <div class="horizontalContain" :style="{marginLeft: '156px',marginRight:'20px'}">
+          <div class="horizontalContain" :style="{marginLeft: '156px',marginRight:'20px',marginTop:'20px'}">
+
+            <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
+              <a-button type="primary" html-type="submit">添加查询范围</a-button>
+            </a-form-item>
 
             <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
               <a-button type="primary" html-type="submit">历史记录</a-button>
