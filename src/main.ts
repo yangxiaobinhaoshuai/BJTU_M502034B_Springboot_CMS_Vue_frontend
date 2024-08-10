@@ -4,6 +4,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
+// import App from './views/SelectView.vue'
 
 import Antd, { Button, Dropdown, message } from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'

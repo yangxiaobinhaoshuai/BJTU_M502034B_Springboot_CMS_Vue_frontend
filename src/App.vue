@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
+import type { SelectProps } from 'ant-design-vue'
 
 const selectedKeys = ref<string[]>(['1'])
 const collapsed = ref<boolean>(false)
@@ -16,6 +17,7 @@ const formState = reactive<FormState>({
   password: '',
   remember: true
 })
+
 const onFinish = (values: any) => {
   console.log('Success:', values)
 }
@@ -23,9 +25,10 @@ const onFinish = (values: any) => {
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo)
 }
-
+//  Range Dialog
 const dialogFormVisible = ref(false)
 
+//  TODO
 const form = reactive({
   name: '',
   region: '',
@@ -39,33 +42,24 @@ const form = reactive({
 
 const formLabelWidth = '140px'
 
-const gridData = [
-  {
-    date: '2016-05-02',
-    name: 'John Smith',
-    address: 'No.1518,  Jinshajiang Road, Putuo District'
-  },
-  {
-    date: '2016-05-04',
-    name: 'John Smith',
-    address: 'No.1518,  Jinshajiang Road, Putuo District'
-  },
-  {
-    date: '2016-05-01',
-    name: 'John Smith',
-    address: 'No.1518,  Jinshajiang Road, Putuo District'
-  },
-  {
-    date: '2016-05-03',
-    name: 'John Smith',
-    address: 'No.1518,  Jinshajiang Road, Putuo District'
-  }
-]
+//  SelectionView
+const maxTagTextLength = ref(10)
+const options = ref<SelectProps['options']>([])
+for (let i = 10; i < 36; i++) {
+  const value = i.toString(36) + i
+  options.value.push({
+    label: `Long Label: ${value}`,
+    value
+  })
+}
+const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
 
 </script>
 
 <template>
   <a-layout>
+
+    <!-- The Slider-->
     <a-layout-sider v-model:collapsed="collapsed" collapsible>
       <div class="logo" />
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
@@ -80,11 +74,14 @@ const gridData = [
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
+
+    <!--The Content Layout-->
     <a-layout>
 
       <!-- TODO bg color-->
       <a-layout-content
         :style="{ height: '100vh', width: '80vw',margin: '24px 16px', padding: '24px', background: '#0ff', minHeight: '100%' }">
+
         <a-form
           :model="formState"
           name="basic"
@@ -95,9 +92,25 @@ const gridData = [
           @finishFailed="onFinishFailed"
           :style="{height: '30vh', width: '30vw',}"
         >
-          <a-typography-text :style="{marginLeft: '200px',marginRight:'20px'}">
-            查询范围
-          </a-typography-text>
+
+          <a-space class="horizontalContain">
+
+            <h1 class="titleSingleLine">
+              查询范围
+            </h1>
+
+            <a-select
+              v-model:value="value"
+              mode="multiple"
+              style="width: 100%"
+              placeholder="Select Item..."
+              :max-tag-text-length="maxTagTextLength"
+              :options="options"
+              :style="{marginLeft: '30px',marginRight:10,paddingRight:20}"
+            ></a-select>
+
+          </a-space>
+
 
           <div class="horizontalContain" :style="{marginLeft: '156px',marginRight:'20px',marginTop:'20px'}">
 
@@ -107,19 +120,23 @@ const gridData = [
 
 
             <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
-              <a-button type="primary" html-type="submit" @click="dialogFormVisible = true">历史记录</a-button>
-            </a-form-item>
-
-            <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
               <a-button type="primary" html-type="submit">查询</a-button>
             </a-form-item>
+
           </div>
 
         </a-form>
       </a-layout-content>
+
+      <!--  Root Content Layout  -->
     </a-layout>
+
+
+    <!--  Root Layout  -->
   </a-layout>
 
+
+  <!--The Range Dialog-->
   <el-dialog v-model="dialogFormVisible" title="添加查询范围" width="500">
     <el-form :model="form">
 
@@ -142,9 +159,15 @@ const gridData = [
       </div>
     </template>
   </el-dialog>
+
+
 </template>
 
 <style>
+.titleSingleLine {
+  white-space: nowrap;
+}
+
 .horizontalContain {
   display: flex;
   flex-direction: row;
@@ -179,6 +202,10 @@ html, body, #app {
 
 .site-layout .site-layout-background {
   background: #fff;
+}
+
+.ant-typography-single-line {
+  white-space: nowrap;
 }
 </style>
 
