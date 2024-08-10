@@ -1,18 +1,9 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import {
-  UserOutlined,
-  VideoCameraOutlined,
-  UploadOutlined,
-  MenuUnfoldOutlined,
-  MenuFoldOutlined
-} from '@ant-design/icons-vue'
+import { reactive, ref } from 'vue'
 
 const selectedKeys = ref<string[]>(['1'])
 const collapsed = ref<boolean>(false)
 
-
-import { reactive } from 'vue'
 
 interface FormState {
   username: string;
@@ -32,6 +23,45 @@ const onFinish = (values: any) => {
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo)
 }
+
+const dialogFormVisible = ref(false)
+
+const form = reactive({
+  name: '',
+  region: '',
+  date1: '',
+  date2: '',
+  delivery: false,
+  type: [],
+  resource: '',
+  desc: ''
+})
+
+const formLabelWidth = '140px'
+
+const gridData = [
+  {
+    date: '2016-05-02',
+    name: 'John Smith',
+    address: 'No.1518,  Jinshajiang Road, Putuo District'
+  },
+  {
+    date: '2016-05-04',
+    name: 'John Smith',
+    address: 'No.1518,  Jinshajiang Road, Putuo District'
+  },
+  {
+    date: '2016-05-01',
+    name: 'John Smith',
+    address: 'No.1518,  Jinshajiang Road, Putuo District'
+  },
+  {
+    date: '2016-05-03',
+    name: 'John Smith',
+    address: 'No.1518,  Jinshajiang Road, Putuo District'
+  }
+]
+
 </script>
 
 <template>
@@ -40,15 +70,12 @@ const onFinishFailed = (errorInfo: any) => {
       <div class="logo" />
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
         <a-menu-item key="1">
-          <user-outlined />
           <span>按年龄范围查询</span>
         </a-menu-item>
         <a-menu-item key="2">
-          <video-camera-outlined />
           <span>按里程范围查询</span>
         </a-menu-item>
         <a-menu-item key="3">
-          <upload-outlined />
           <span>按飞行时间范围查询</span>
         </a-menu-item>
       </a-menu>
@@ -72,15 +99,15 @@ const onFinishFailed = (errorInfo: any) => {
             查询范围
           </a-typography-text>
 
-
           <div class="horizontalContain" :style="{marginLeft: '156px',marginRight:'20px',marginTop:'20px'}">
 
             <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
-              <a-button type="primary" html-type="submit">添加查询范围</a-button>
+              <a-button type="primary" html-type="submit" @click="dialogFormVisible = true">添加查询范围</a-button>
             </a-form-item>
 
+
             <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
-              <a-button type="primary" html-type="submit">历史记录</a-button>
+              <a-button type="primary" html-type="submit" @click="dialogFormVisible = true">历史记录</a-button>
             </a-form-item>
 
             <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
@@ -92,6 +119,29 @@ const onFinishFailed = (errorInfo: any) => {
       </a-layout-content>
     </a-layout>
   </a-layout>
+
+  <el-dialog v-model="dialogFormVisible" title="添加查询范围" width="500">
+    <el-form :model="form">
+
+      <el-form-item label="From" :label-width="formLabelWidth">
+        <el-input v-model="form.name" autocomplete="off" />
+      </el-form-item>
+
+      <el-form-item label="To" :label-width="formLabelWidth">
+        <el-input v-model="form.name" autocomplete="off" />
+      </el-form-item>
+
+
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="dialogFormVisible = false">
+          Confirm
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <style>
