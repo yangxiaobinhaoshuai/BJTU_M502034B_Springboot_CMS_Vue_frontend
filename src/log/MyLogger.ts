@@ -5,3 +5,5 @@ class MyLogger {
   }
 
 }
+
+export default MyLogger

@@ -1,6 +1,13 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import type { SelectProps } from 'ant-design-vue'
+import { useHistoricalStore } from '@/stores/historical_range_store'
+import { useSelectedStore } from '@/stores/selected_range_store'
+import MyLogger from './log/MyLogger'
+
+const historicalStore = useHistoricalStore()
+const selectedStore = useSelectedStore()
+
 
 const selectedKeys = ref<string[]>(['1'])
 const collapsed = ref<boolean>(false)
@@ -18,15 +25,12 @@ const formState = reactive<FormState>({
   remember: true
 })
 
-const onFinish = (values: any) => {
-  console.log('Success:', values)
-}
-
-const onFinishFailed = (errorInfo: any) => {
-  console.log('Failed:', errorInfo)
-}
 //  Range Dialog
 const dialogFormVisible = ref(false)
+const dialogConfirmAction = () => {
+  MyLogger.d('Confirm range dialog.', JSON.stringify(form))
+  dialogFormVisible.value = false
+}
 
 //  TODO
 const form = reactive({
@@ -89,7 +93,6 @@ const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
           :wrapper-col="{ span: 16 }"
           autocomplete="off"
           @finish="onFinish"
-          @finishFailed="onFinishFailed"
           :style="{height: '30vh', width: '30vw',}"
         >
 
@@ -153,9 +156,7 @@ const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogFormVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="dialogFormVisible = false">
-          Confirm
-        </el-button>
+        <el-button type="primary" @click="dialogConfirmAction">Confirm</el-button>
       </div>
     </template>
   </el-dialog>
