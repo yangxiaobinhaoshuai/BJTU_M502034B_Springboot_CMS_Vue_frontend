@@ -1,61 +1,62 @@
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
-import type { SelectProps } from 'ant-design-vue'
+import { reactive, ref, Ref, watch } from 'vue'
 import { useHistoricalStore } from '@/stores/historical_range_store'
 import { useSelectedStore } from '@/stores/selected_range_store'
-import MyLogger from './log/MyLogger'
 import myLogger from './log/MyLogger'
+import type { SelectProps } from 'ant-design-vue'
 
-
-const onFinish = () => {
-}
 const historicalStore = useHistoricalStore()
 const selectedStore = useSelectedStore()
 
 selectedStore.$subscribe((mutation, state) => {
-  // myLogger.d(JSON.stringify(state.rangList))
+  myLogger.d('selectedStore state changed, new displayList ===> ', JSON.stringify(selectedStore.displayList))
+  select_value.value = selectedStore.displayList
 })
-// watch(selectedStore.$state, (newVal, oldVal) => {
-//   myLogger.d(JSON.stringify(selectedStore.displayList))
-//   myLogger.d('newVal: ', JSON.stringify(newVal.displayList), ' oldVal:', JSON.stringify(oldVal.displayList))
-// })
+
+historicalStore.$subscribe((mutation, state) => {
+  const newHisVal = historicalStore.typedList.map(d => {
+    return {
+      // label: `${d.from}-${d.to}`,
+      value: `${d.from}-${d.to}`
+    }
+  })
+  myLogger.d('historicalStore state changed, newHisVal ===> ', JSON.stringify(newHisVal))
+  historical_options.value = newHisVal
+})
 
 
 const selectedKeys = ref<string[]>(['1'])
 const collapsed = ref<boolean>(false)
 
 
-interface FormState {
-  username: string;
-  password: string;
-  remember: boolean;
-}
-
-const formState = reactive<FormState>({
-  username: '',
-  password: '',
-  remember: true
+watch(selectedKeys, (newVal) => {
+  let type = Number(newVal[0])
+  myLogger.d('selectedStore changed to: ', JSON.stringify(type))
+  selectedStore.setType(type)
+  historicalStore.setType(type)
 })
 
 //  Range Dialog
 const dialogFormVisible = ref(false)
 const onQuerySubmit = () => {
-  myLogger.d('Submit query range.', JSON.stringify(selectedStore.rangList))
+  myLogger.d('Submit query range.', JSON.stringify(selectedStore.typedList))
 }
 
 const onDialogConfirmAction = () => {
-  myLogger.d('Confirm range dialog.', JSON.stringify(select_range))
-  selectedStore.add({ type: select_range.type, from: select_range.from, to: select_range.to })
-  // historicalStore.add(select_range)
+  const r = { type: Number(selectedKeys.value[0]), from: select_range.from, to: select_range.to }
+  myLogger.d('Confirm range dialog.', JSON.stringify(r))
+  selectedStore.add(r)
+  historicalStore.add(r)
   dialogFormVisible.value = false
 }
 
-//  TODO
 const select_range = reactive({
   type: 0,
   from: 0,
   to: 0
 })
+
+const placement = ref('topLeft' as const)
 
 const onDismiss = () => {
   select_range.to = 0
@@ -63,23 +64,28 @@ const onDismiss = () => {
   myLogger.d('Dismiss range.', JSON.stringify(select_range))
 }
 
-const onSelectionChange = (value, option) => {
-  myLogger.d('onSelectionChange,', value, ' option: ', option)
+const handleChange = (value: string) => {
+  myLogger.d('Change range.', JSON.stringify(value))
 }
 
 const formLabelWidth = '140px'
 
 //  SelectionView
 const maxTagTextLength = ref(10)
-const options = ref<SelectProps['options']>([])
+let historical_options = ref<SelectProps['options']>([])
+const select_value: Ref<string[]> = ref([])
 
-//  添加历史查询记录
-for (let i = 10; i < 36; i++) {
-  const value = i.toString(36) + i
-  options.value.push({
-    label: `Long Label: ${value}`,
-    value
-  })
+
+const onSelectOption = (value: any) => {
+  myLogger.d('Select option.', JSON.stringify(value))
+}
+
+const onDeselectOption = (value: any) => {
+  myLogger.d('Deselect option.', JSON.stringify(value))
+  const split = value.split('-')
+  const from = Number(split[0])
+  const to = Number(split[1])
+  selectedStore.remove({ type: Number(selectedKeys.value[0]), from: from, to: to })
 }
 
 </script>
@@ -111,12 +117,10 @@ for (let i = 10; i < 36; i++) {
         :style="{ height: '100vh', width: '80vw',margin: '24px 16px', padding: '24px', background: '#0ff', minHeight: '100%' }">
 
         <a-form
-          :model="formState"
           name="basic"
           :label-col="{ span: 8 }"
           :wrapper-col="{ span: 16 }"
           autocomplete="off"
-          @finish="onFinish"
           :style="{height: '30vh', width: '30vw',}"
         >
 
@@ -128,17 +132,18 @@ for (let i = 10; i < 36; i++) {
 
             <a-select
               class="selectRange"
-              v-model:value="selectedStore.displayList"
+              v-model:value="select_value"
+              option-label-prop="children"
               mode="multiple"
+              :placement="placement"
               style="width: 100%"
               placeholder="Select Item..."
               :max-tag-text-length="maxTagTextLength"
-              :options="historicalStore.displayList"
+              :options="historical_options"
               :style="{marginLeft: '30px',marginRight:10,paddingRight:20}"
-              :onchange="onSelectionChange"
-              :deselect="()=>{ MyLogger.d(11212)}"
-              :select="()=>{ MyLogger.d(11212)}"
-              :search="()=>{ MyLogger.d(1122342312)}"
+              @change="handleChange"
+              @deselect="onDeselectOption"
+              @select="onSelectOption"
             ></a-select>
 
           </a-space>

@@ -8,5 +8,4 @@ class RangeData {
     this.from = from
     this.to = to
   }
-
 }

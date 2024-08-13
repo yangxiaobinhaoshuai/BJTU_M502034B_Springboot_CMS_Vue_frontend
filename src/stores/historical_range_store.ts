@@ -1,23 +1,39 @@
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import _ from 'lodash'
+import myLogger from '@/log/MyLogger'
 
 export const useHistoricalStore = defineStore('historical_range_store', () => {
 
+  const currentType = ref(1)
+
   const rangList = ref<Array<RangeData>>([])
 
-  const displayList = computed(() => rangList.value.map(range => range.from.toString() + '-' + range.to.toString()))
+  const typedList = computed(() => rangList.value.filter((r => r.type == currentType.value)))
+
+  const displayList = computed(() => typedList.value.map(range => range.from.toString() + '-' + range.to.toString()))
 
   function add(range: RangeData) {
-    rangList.value.push(range)
+    const contains = rangList.value.find(e => _.isEqual(e, range))
+    myLogger.d('historical_range_store.add range:', JSON.stringify(range), ' contains: ', Boolean(contains))
+    if (!contains) {
+      rangList.value.push(range)
+    } else {
+      myLogger.d('Already add ', range)
+    }
   }
 
   function remove(range: RangeData) {
-    const index = rangList.value.indexOf(range, 0)
+    const index = rangList.value.findIndex(r=> r.type == range.type && r.from == range.from && r.to == range.to)
     if (index > -1) {
       rangList.value.splice(index, 1)
     }
   }
 
+  function setType(type: number) {
+    currentType.value = type
+  }
 
-  return { rangList, displayList, add, remove }
+
+  return { currentType, rangList, typedList, displayList, setType, add, remove }
 })
