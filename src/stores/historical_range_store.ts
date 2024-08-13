@@ -5,6 +5,8 @@ export const useHistoricalStore = defineStore('historical_range_store', () => {
 
   const rangList = ref<Array<RangeData>>([])
 
+  const displayList = computed(() => rangList.value.map(range => range.from.toString() + '-' + range.to.toString()))
+
   function add(range: RangeData) {
     rangList.value.push(range)
   }
@@ -17,5 +19,5 @@ export const useHistoricalStore = defineStore('historical_range_store', () => {
   }
 
 
-  return { rangList, add, remove }
+  return { rangList, displayList, add, remove }
 })

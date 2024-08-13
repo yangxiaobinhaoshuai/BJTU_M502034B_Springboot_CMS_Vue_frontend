@@ -4,9 +4,21 @@ import type { SelectProps } from 'ant-design-vue'
 import { useHistoricalStore } from '@/stores/historical_range_store'
 import { useSelectedStore } from '@/stores/selected_range_store'
 import MyLogger from './log/MyLogger'
+import myLogger from './log/MyLogger'
 
+
+const onFinish = () => {
+}
 const historicalStore = useHistoricalStore()
 const selectedStore = useSelectedStore()
+
+selectedStore.$subscribe((mutation, state) => {
+  // myLogger.d(JSON.stringify(state.rangList))
+})
+// watch(selectedStore.$state, (newVal, oldVal) => {
+//   myLogger.d(JSON.stringify(selectedStore.displayList))
+//   myLogger.d('newVal: ', JSON.stringify(newVal.displayList), ' oldVal:', JSON.stringify(oldVal.displayList))
+// })
 
 
 const selectedKeys = ref<string[]>(['1'])
@@ -27,28 +39,41 @@ const formState = reactive<FormState>({
 
 //  Range Dialog
 const dialogFormVisible = ref(false)
-const dialogConfirmAction = () => {
-  MyLogger.d('Confirm range dialog.', JSON.stringify(form))
+const onQuerySubmit = () => {
+  myLogger.d('Submit query range.', JSON.stringify(selectedStore.rangList))
+}
+
+const onDialogConfirmAction = () => {
+  myLogger.d('Confirm range dialog.', JSON.stringify(select_range))
+  selectedStore.add({ type: select_range.type, from: select_range.from, to: select_range.to })
+  // historicalStore.add(select_range)
   dialogFormVisible.value = false
 }
 
 //  TODO
-const form = reactive({
-  name: '',
-  region: '',
-  date1: '',
-  date2: '',
-  delivery: false,
-  type: [],
-  resource: '',
-  desc: ''
+const select_range = reactive({
+  type: 0,
+  from: 0,
+  to: 0
 })
+
+const onDismiss = () => {
+  select_range.to = 0
+  select_range.from = 0
+  myLogger.d('Dismiss range.', JSON.stringify(select_range))
+}
+
+const onSelectionChange = (value, option) => {
+  myLogger.d('onSelectionChange,', value, ' option: ', option)
+}
 
 const formLabelWidth = '140px'
 
 //  SelectionView
 const maxTagTextLength = ref(10)
 const options = ref<SelectProps['options']>([])
+
+//  添加历史查询记录
 for (let i = 10; i < 36; i++) {
   const value = i.toString(36) + i
   options.value.push({
@@ -56,7 +81,6 @@ for (let i = 10; i < 36; i++) {
     value
   })
 }
-const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
 
 </script>
 
@@ -103,13 +127,18 @@ const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
             </h1>
 
             <a-select
-              v-model:value="value"
+              class="selectRange"
+              v-model:value="selectedStore.displayList"
               mode="multiple"
               style="width: 100%"
               placeholder="Select Item..."
               :max-tag-text-length="maxTagTextLength"
-              :options="options"
+              :options="historicalStore.displayList"
               :style="{marginLeft: '30px',marginRight:10,paddingRight:20}"
+              :onchange="onSelectionChange"
+              :deselect="()=>{ MyLogger.d(11212)}"
+              :select="()=>{ MyLogger.d(11212)}"
+              :search="()=>{ MyLogger.d(1122342312)}"
             ></a-select>
 
           </a-space>
@@ -123,7 +152,7 @@ const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
 
 
             <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
-              <a-button type="primary" html-type="submit">查询</a-button>
+              <a-button type="primary" html-type="submit" @click="onQuerySubmit">查询</a-button>
             </a-form-item>
 
           </div>
@@ -140,15 +169,15 @@ const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
 
 
   <!--The Range Dialog-->
-  <el-dialog v-model="dialogFormVisible" title="添加查询范围" width="500">
-    <el-form :model="form">
+  <el-dialog v-model="dialogFormVisible" @close="onDismiss" title="添加查询范围" width="500">
+    <el-form :model="select_range">
 
       <el-form-item label="From" :label-width="formLabelWidth">
-        <el-input v-model="form.name" autocomplete="off" />
+        <el-input v-model="select_range.from" autocomplete="off" />
       </el-form-item>
 
       <el-form-item label="To" :label-width="formLabelWidth">
-        <el-input v-model="form.name" autocomplete="off" />
+        <el-input v-model="select_range.to" autocomplete="off" />
       </el-form-item>
 
 
@@ -156,7 +185,7 @@ const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogFormVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="dialogConfirmAction">Confirm</el-button>
+        <el-button type="primary" @click="onDialogConfirmAction">Confirm</el-button>
       </div>
     </template>
   </el-dialog>
@@ -165,6 +194,10 @@ const value = ref(['a10', 'c12', 'h17', 'j19', 'k20', 'l44'])
 </template>
 
 <style>
+.selectRange {
+  min-width: 380px;
+}
+
 .titleSingleLine {
   white-space: nowrap;
 }
