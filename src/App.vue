@@ -205,6 +205,20 @@ const onDeselectOption = (value: any) => {
 
 // 当前 tab
 const activeTabIndex = ref('1')
+watch(activeTabIndex, (newVal, oldVal) => {
+  switch (newVal) {
+    case '1':
+      listRangeDisable.value = false
+      break;
+    case '2':
+      listRangeDisable.value = true
+      break;
+    case '3':
+      listRangeDisable.value = true
+      break;
+    default: break
+  }
+})
 
 const pie_option = ref({
   title: {
@@ -268,6 +282,8 @@ const listData = ref([])
 
 // 列表当前正在选择的范围
 const listCurrentSelectRange = ref(undefined)
+// 是否禁用列表
+const listRangeDisable = ref(false)
 // 列表所有范围
 const listRangeOptions = ref<SelectProps['options']>([])
 
@@ -399,6 +415,7 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
                       v-model:value="listCurrentSelectRange"
                       label-in-value
                       style="width: 140px"
+                      :disabled="listRangeDisable"
                       :options="listRangeOptions"
                       @change="handleListRangeChange"
             ></a-select>
