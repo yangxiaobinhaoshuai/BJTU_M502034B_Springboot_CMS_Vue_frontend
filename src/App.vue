@@ -1,10 +1,27 @@
 <script lang="ts" setup>
-import { reactive, ref, Ref, watch } from 'vue'
+import { provide, reactive, Ref, ref, watch } from 'vue'
 import { useHistoricalStore } from '@/stores/historical_range_store'
 import { useSelectedStore } from '@/stores/selected_range_store'
 import myLogger from './log/MyLogger'
 import type { SelectProps } from 'ant-design-vue'
-import { get,ApiResult } from './net/api'
+import { ApiResult, get } from './net/api'
+import 'echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart, PieChart } from 'echarts/charts'
+import { LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
+import VChart, { THEME_KEY } from 'vue-echarts'
+
+use([
+  CanvasRenderer,
+  PieChart,
+  BarChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent
+])
+
+provide(THEME_KEY, 'dark')
 
 const historicalStore = useHistoricalStore()
 const selectedStore = useSelectedStore()
@@ -40,11 +57,21 @@ watch(selectedKeys, (newVal) => {
 //  Range Dialog
 const dialogFormVisible = ref(false)
 
-// TODO
 const display_data = reactive<Array<ApiResponse>>([])
 
 watch(display_data, (newVal) => {
-  myLogger.d('watch for display_data new val: ', JSON.stringify(newVal))
+  myLogger.d('watch for display_data new val: ', JSON.stringify(newVal.map(r => r.data?.length || 0)))
+  // pie char
+  const newPieChar = newVal.map((res: ApiResponse) => {
+    return { value: res.data?.length || 0, name: `${res.from} - ${res.to}` }
+  })
+  pie_option.value.series[0].data = newPieChar
+
+  // bar chart
+  const xTitles = newVal.map((res: ApiResponse) => `${res.from} - ${res.to}`)
+  const yData = newVal.map((res: ApiResponse) => res.data?.length || 0)
+  bar_option.xAxis.data = xTitles
+  bar_option.series[0].data = yData
 })
 
 const onQuerySubmit = () => {
@@ -69,8 +96,8 @@ const onQuerySubmit = () => {
       break
     case 3:
       myLogger.d('Query for time.')
-      // mile_range?from=2&to=63
-      promiseArr = rangesArr.map((pair) => get<ApiResponse>('mile_range?', { from: pair.from, to: pair.to }))
+      // time_range?from=2&to=63
+      promiseArr = rangesArr.map((pair) => get<ApiResponse>('time_range?', { from: pair.from, to: pair.to }))
       break
     default:
       break
@@ -134,7 +161,65 @@ const onDeselectOption = (value: any) => {
   selectedStore.remove({ type: Number(selectedKeys.value[0]), from: from, to: to })
 }
 
-const activeKey = ref('1');
+const activeKey = ref('1')
+
+const pie_option = ref({
+  title: {
+    text: 'Traffic Sources',
+    left: 'center'
+  },
+  tooltip: {
+    trigger: 'item',
+    formatter: '{a} <br/>{b} : {c} ({d}%)'
+  },
+  legend: {
+    orient: 'vertical',
+    left: 'left',
+    data: ['Direct', 'Email', 'Ad Networks', 'Video Ads', 'Search Engines']
+  },
+  series: [
+    {
+      name: 'Traffic Sources',
+      type: 'pie',
+      radius: '55%',
+      center: ['50%', '60%'],
+      // data: [
+      //   { value: 335, name: 'Direct' },
+      //   { value: 310, name: 'Email' },
+      //   { value: 234, name: 'Ad Networks' },
+      //   { value: 235, name: 'Video Ads' },
+      //   { value: 1548, name: 'Search Engines' }
+      // ],
+      data:[],
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      }
+    }
+  ]
+})
+
+
+const bar_option = {
+  xAxis: {
+    type: 'category',
+    // data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    data: [],
+  },
+  yAxis: {
+    type: 'value'
+  },
+  series: [
+    {
+      // data: [120, 200, 150, 80, 70, 110, 130],
+      data: [],
+      type: 'bar'
+    }
+  ]
+}
 
 </script>
 
@@ -220,11 +305,11 @@ const activeKey = ref('1');
           </a-tab-pane>
 
           <a-tab-pane key="2" tab="Tab 2">
-            Content of tab 2
+            <v-chart class="chart" :option="pie_option" autoresize />
           </a-tab-pane>
 
           <a-tab-pane key="3" tab="Tab 3">
-            Content of tab 3
+            <v-chart class="chart" :option="bar_option" autoresize />
           </a-tab-pane>
 
           <template #leftExtra>
@@ -327,6 +412,10 @@ html, body, #app {
 .ant-row-rtl .tabs-extra-demo-button {
   margin-right: 0;
   margin-left: 16px;
+}
+
+.chart {
+  height: 100vh;
 }
 </style>
 
