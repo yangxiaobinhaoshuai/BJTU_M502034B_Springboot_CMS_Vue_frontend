@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import { defineStore, mapState } from 'pinia'
+import { defineStore } from 'pinia'
 import myLogger from '@/log/MyLogger'
 import _ from 'lodash'
 
@@ -24,7 +24,7 @@ export const useSelectedStore = defineStore('selected_range_store', () => {
   }
 
   function remove(range: RangeData) {
-    const index = rangList.value.findIndex(r=> r.type == range.type && r.from == range.from && r.to == range.to)
+    const index = rangList.value.findIndex(r => r.type == range.type && r.from == range.from && r.to == range.to)
     if (index > -1) {
       rangList.value.splice(index, 1)
     }

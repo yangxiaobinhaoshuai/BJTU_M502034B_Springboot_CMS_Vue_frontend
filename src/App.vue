@@ -11,6 +11,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart, PieChart } from 'echarts/charts'
 import { LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import VChart, { THEME_KEY } from 'vue-echarts'
+import RangeData from './pojo/RangeData'
 
 use([
   CanvasRenderer,
@@ -21,6 +22,7 @@ use([
   LegendComponent
 ])
 
+// TODO color
 provide(THEME_KEY, 'dark')
 
 const historicalStore = useHistoricalStore()
@@ -28,7 +30,7 @@ const selectedStore = useSelectedStore()
 
 selectedStore.$subscribe((mutation, state) => {
   myLogger.d('selectedStore state changed, new displayList ===> ', JSON.stringify(selectedStore.displayList))
-  select_value.value = selectedStore.displayList
+  selectRanges.value = selectedStore.displayList
 })
 
 historicalStore.$subscribe((mutation, state) => {
@@ -57,15 +59,15 @@ watch(selectedKeys, (newVal) => {
 //  Range Dialog
 const dialogFormVisible = ref(false)
 
+// 接口返回的要展示的数据
 const display_data = reactive<Array<ApiResponse>>([])
 
 watch(display_data, (newVal) => {
   myLogger.d('watch for display_data new val: ', JSON.stringify(newVal.map(r => r.data?.length || 0)))
   // pie char
-  const newPieChar = newVal.map((res: ApiResponse) => {
+  pie_option.value.series[0].data = newVal.map((res: ApiResponse) => {
     return { value: res.data?.length || 0, name: `${res.from} - ${res.to}` }
   })
-  pie_option.value.series[0].data = newPieChar
 
   // bar chart
   const xTitles = newVal.map((res: ApiResponse) => `${res.from} - ${res.to}`)
@@ -74,13 +76,19 @@ watch(display_data, (newVal) => {
   bar_option.xAxis.data = xTitles
   bar_option.series[0].data = yData
 
-  const travelers = newVal[0].data
-  listData.value.push(...travelers)
-  myLogger.d('after insert listData:', JSON.stringify(listData))
+  const listRange = selectListRangeOption.value
+  myLogger.d("display list change, current list range Data: ", JSON.stringify(listRange))
+  const index = newVal.findIndex((res => res.from == listRange.from && res.to == listRange.to))
+  if (index >= 0) {
+    const travelers = newVal[index].data
+    listData.value.push(...travelers)
+    myLogger.d('after insert listData:', JSON.stringify(listData))
+  }
 })
 
 const onQuerySubmit = () => {
   const queryType = Number(selectedKeys.value[0])
+
   const selectRanges = Array.from(selectedStore.typedList.values())
   const rangesArr = selectRanges.map((range) => {
     return { from: range.from, to: range.to }
@@ -107,6 +115,7 @@ const onQuerySubmit = () => {
     default:
       break
   }
+
   if (promiseArr) {
     Promise.all(promiseArr).then((result: Awaited<ApiResult<ApiResponse>>[]) => {
       // myLogger.d('Results for all: ', JSON.stringify(result))
@@ -114,17 +123,30 @@ const onQuerySubmit = () => {
     })
   }
 
+  listRangeOptions.value = selectedStore.typedList.map((r) => {
+    return {
+      value: `${r.from}-${r.to}`
+    }
+  })
+
+  myLogger.d('onQuerySubmit, last set current list range: ', JSON.stringify(selectedStore.rangList))
+
+  if (selectedStore.rangList.length > 0) {
+    selectListRangeOption.value = new RangeData(queryType, selectedStore.rangList[0].from, selectedStore.rangList[0].to)
+  }
+
 }
 
 const onDialogConfirmAction = () => {
-  const r = { type: Number(selectedKeys.value[0]), from: select_range.from, to: select_range.to }
+  const r = { type: Number(selectedKeys.value[0]), from: theCreatedRange.from, to: theCreatedRange.to }
   myLogger.d('Confirm range dialog.', JSON.stringify(r))
   selectedStore.add(r)
   historicalStore.add(r)
   dialogFormVisible.value = false
 }
 
-const select_range = reactive({
+//  输入的范围
+const theCreatedRange = reactive({
   type: 0,
   from: 0,
   to: 0
@@ -133,21 +155,23 @@ const select_range = reactive({
 const placement = ref('topLeft' as const)
 
 const onDismiss = () => {
-  select_range.to = 0
-  select_range.from = 0
-  myLogger.d('Dismiss range.', JSON.stringify(select_range))
+  theCreatedRange.to = 0
+  theCreatedRange.from = 0
+  myLogger.d('Dismiss range selection.')
 }
 
-const handleChange = (value: string) => {
+const handleSelectRangesChange = (value: string) => {
   myLogger.d('Change range.', JSON.stringify(value))
 }
 
+// 输入框宽度
 const formLabelWidth = '140px'
 
 //  SelectionView
 const maxTagTextLength = ref(10)
 let historical_options = ref<SelectProps['options']>([])
-const select_value: Ref<string[]> = ref([])
+// input 中所有输入的范围
+const selectRanges: Ref<string[]> = ref([])
 
 
 const onSelectOption = (value: any) => {
@@ -166,7 +190,8 @@ const onDeselectOption = (value: any) => {
   selectedStore.remove({ type: Number(selectedKeys.value[0]), from: from, to: to })
 }
 
-const activeKey = ref('1')
+// 当前 tab
+const activeTabIndex = ref('1')
 
 const pie_option = ref({
   title: {
@@ -188,13 +213,6 @@ const pie_option = ref({
       type: 'pie',
       radius: '55%',
       center: ['50%', '60%'],
-      // data: [
-      //   { value: 335, name: 'Direct' },
-      //   { value: 310, name: 'Email' },
-      //   { value: 234, name: 'Ad Networks' },
-      //   { value: 235, name: 'Video Ads' },
-      //   { value: 1548, name: 'Search Engines' }
-      // ],
       data: [],
       emphasis: {
         itemStyle: {
@@ -207,11 +225,9 @@ const pie_option = ref({
   ]
 })
 
-
 const bar_option = {
   xAxis: {
     type: 'category',
-    // data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     data: []
   },
   yAxis: {
@@ -219,13 +235,13 @@ const bar_option = {
   },
   series: [
     {
-      // data: [120, 200, 150, 80, 70, 110, 130],
       data: [],
       type: 'bar'
     }
   ]
 }
 
+// 列表分页器
 const pagination = {
   onChange: (page: number) => {
     console.log(page)
@@ -234,7 +250,26 @@ const pagination = {
   pageSize: 10
 }
 
+// 列表数据
 const listData = ref([])
+
+// 列表所有范围
+const listRangeOptions = ref<SelectProps['options']>([])
+
+// 当前展示 list 的范围
+const selectListRangeOption = ref({})
+
+// 列表选择 callback
+const handleListRangeChange: SelectProps['onChange'] = value => {
+  // {"value":"1993-2030","key":"1993-2030","option":{"value":"1993-2030"}}
+  myLogger.d('handleListRangeChange, val: ', JSON.stringify(value))
+  const strRange = value.value
+  const split = strRange.split('-')
+  const from = split[0]
+  const to = split[1]
+  const queryType = Number(selectedKeys.value[0])
+  selectListRangeOption.value = new RangeData(queryType, from, to)
+}
 
 </script>
 
@@ -260,7 +295,6 @@ const listData = ref([])
     <!--The Content Layout-->
     <a-layout>
 
-      <!-- TODO bg color-->
       <a-layout-content
         :style="{ height: '100vh', width: '80vw',margin: '24px 16px', padding: '24px',
         //background: '#0ff',
@@ -283,7 +317,7 @@ const listData = ref([])
 
             <a-select
               class="selectRange"
-              v-model:value="select_value"
+              v-model:value="selectRanges"
               option-label-prop="children"
               mode="multiple"
               :placement="placement"
@@ -292,7 +326,7 @@ const listData = ref([])
               :max-tag-text-length="maxTagTextLength"
               :options="historical_options"
               :style="{marginLeft: '30px',marginRight:10,paddingRight:20}"
-              @change="handleChange"
+              @change="handleSelectRangesChange"
               @deselect="onDeselectOption"
               @select="onSelectOption"
             ></a-select>
@@ -316,14 +350,14 @@ const listData = ref([])
         </a-form>
 
         <!--Tabs-->
-        <a-tabs v-model:activeKey="activeKey">
+        <a-tabs v-model:activeKey="activeTabIndex">
 
           <a-tab-pane key="1" tab="Tab 1">
 
-            <!--     List       -->
+            <!-- List -->
             <a-list item-layout="vertical" size="small" :pagination="pagination" :data-source="listData">
 
-              <template #renderItem="{ item, index }">
+              <template #renderItem="{ item }">
                 <a-list-item key="item.title">
                   <a-list-item-meta>
                     <template #title>
@@ -348,7 +382,13 @@ const listData = ref([])
           </a-tab-pane>
 
           <template #leftExtra>
-            <a-button class="tabs-extra-demo-button">选择列表范围</a-button>
+            <a-select class="listSpecialRangeSelection"
+                      placeholder="请选择列表具体范围"
+                      label-in-value
+                      style="width: 140px"
+                      :options="listRangeOptions"
+                      @change="handleListRangeChange"
+            ></a-select>
           </template>
         </a-tabs>
 
@@ -365,14 +405,14 @@ const listData = ref([])
 
   <!--The Range Dialog-->
   <el-dialog v-model="dialogFormVisible" @close="onDismiss" title="添加查询范围" width="500">
-    <el-form :model="select_range">
+    <el-form :model="theCreatedRange">
 
       <el-form-item label="From" :label-width="formLabelWidth">
-        <el-input v-model="select_range.from" autocomplete="off" />
+        <el-input v-model="theCreatedRange.from" autocomplete="off" />
       </el-form-item>
 
       <el-form-item label="To" :label-width="formLabelWidth">
-        <el-input v-model="select_range.to" autocomplete="off" />
+        <el-input v-model="theCreatedRange.to" autocomplete="off" />
       </el-form-item>
 
 
@@ -448,6 +488,10 @@ html, body, #app {
 
 .chart {
   height: 100vh;
+}
+
+.listSpecialRangeSelection {
+  margin-right: 20px;
 }
 </style>
 

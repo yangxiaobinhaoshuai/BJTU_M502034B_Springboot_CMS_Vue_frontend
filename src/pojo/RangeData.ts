@@ -9,3 +9,5 @@ class RangeData {
     this.to = to
   }
 }
+
+export default RangeData

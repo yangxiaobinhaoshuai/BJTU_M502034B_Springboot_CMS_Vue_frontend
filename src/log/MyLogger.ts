@@ -1,7 +1,8 @@
 class MyLogger {
 
   public static d(...data: any[]): void {
-    console.log(`Bjtu-cms -> ${data}`)
+    //console.log(`BJTU: ${data}`)
+    console.log(data)
   }
 
 }

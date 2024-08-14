@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // 在发送请求之前做些什么
-    myLogger.d("request interceptor, config,",config)
+    //myLogger.d("request interceptor, config,",config)
     return config
   },
   (error: any) => {
@@ -24,7 +24,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // 对响应数据做点什么
-    myLogger.d('response interceptor, response,', response)
+    //myLogger.d('response interceptor, response,', response)
     return response
   },
   (error: any) => {
