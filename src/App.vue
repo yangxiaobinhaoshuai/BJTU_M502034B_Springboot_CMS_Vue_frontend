@@ -70,8 +70,13 @@ watch(display_data, (newVal) => {
   // bar chart
   const xTitles = newVal.map((res: ApiResponse) => `${res.from} - ${res.to}`)
   const yData = newVal.map((res: ApiResponse) => res.data?.length || 0)
+  myLogger.d(`bar chart, xTitles: ${xTitles}, yData: ${yData}.`)
   bar_option.xAxis.data = xTitles
   bar_option.series[0].data = yData
+
+  const travelers = newVal[0].data
+  listData.value.push(...travelers)
+  myLogger.d('after insert listData:', JSON.stringify(listData))
 })
 
 const onQuerySubmit = () => {
@@ -165,7 +170,7 @@ const activeKey = ref('1')
 
 const pie_option = ref({
   title: {
-    text: 'Traffic Sources',
+    text: '饼图',
     left: 'center'
   },
   tooltip: {
@@ -190,7 +195,7 @@ const pie_option = ref({
       //   { value: 235, name: 'Video Ads' },
       //   { value: 1548, name: 'Search Engines' }
       // ],
-      data:[],
+      data: [],
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -207,7 +212,7 @@ const bar_option = {
   xAxis: {
     type: 'category',
     // data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    data: [],
+    data: []
   },
   yAxis: {
     type: 'value'
@@ -220,6 +225,16 @@ const bar_option = {
     }
   ]
 }
+
+const pagination = {
+  onChange: (page: number) => {
+    console.log(page)
+    myLogger.d('list page changed, newPage: ', page)
+  },
+  pageSize: 10
+}
+
+const listData = ref([])
 
 </script>
 
@@ -247,14 +262,17 @@ const bar_option = {
 
       <!-- TODO bg color-->
       <a-layout-content
-        :style="{ height: '100vh', width: '80vw',margin: '24px 16px', padding: '24px', background: '#0ff', minHeight: '100%' }">
+        :style="{ height: '100vh', width: '80vw',margin: '24px 16px', padding: '24px',
+        //background: '#0ff',
+        background: '#fff',
+        minHeight: '100%' }">
 
         <a-form
           name="basic"
           :label-col="{ span: 8 }"
           :wrapper-col="{ span: 16 }"
           autocomplete="off"
-          :style="{height: '30vh', width: '30vw',}"
+          :style="{height: '15vh', width: '30vw',}"
         >
 
           <a-space class="horizontalContain">
@@ -301,7 +319,24 @@ const bar_option = {
         <a-tabs v-model:activeKey="activeKey">
 
           <a-tab-pane key="1" tab="Tab 1">
-            Content of tab 1
+
+            <!--     List       -->
+            <a-list item-layout="vertical" size="small" :pagination="pagination" :data-source="listData">
+
+              <template #renderItem="{ item, index }">
+                <a-list-item key="item.title">
+                  <a-list-item-meta>
+                    <template #title>
+                      <a :href="item.href">
+                        {{ item }}
+                      </a>
+                    </template>
+                  </a-list-item-meta>
+                  <!--{{ item.content }}-->
+                </a-list-item>
+              </template>
+            </a-list>
+
           </a-tab-pane>
 
           <a-tab-pane key="2" tab="Tab 2">
@@ -313,10 +348,7 @@ const bar_option = {
           </a-tab-pane>
 
           <template #leftExtra>
-            <a-button class="tabs-extra-demo-button">Left Extra Action</a-button>
-          </template>
-          <template #rightExtra>
-            <a-button>Right Extra Action</a-button>
+            <a-button class="tabs-extra-demo-button">选择列表范围</a-button>
           </template>
         </a-tabs>
 
