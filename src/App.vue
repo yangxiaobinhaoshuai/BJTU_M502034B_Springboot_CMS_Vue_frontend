@@ -4,7 +4,7 @@ import { useHistoricalStore } from '@/stores/historical_range_store'
 import { useSelectedStore } from '@/stores/selected_range_store'
 import myLogger from './log/MyLogger'
 import type { SelectProps } from 'ant-design-vue'
-import { get } from './net/api'
+import { get,ApiResult } from './net/api'
 
 const historicalStore = useHistoricalStore()
 const selectedStore = useSelectedStore()
@@ -39,12 +39,49 @@ watch(selectedKeys, (newVal) => {
 
 //  Range Dialog
 const dialogFormVisible = ref(false)
+
+// TODO
+const display_data = reactive<Array<ApiResponse>>([])
+
+watch(display_data, (newVal) => {
+  myLogger.d('watch for display_data new val: ', JSON.stringify(newVal))
+})
+
 const onQuerySubmit = () => {
-  myLogger.d('Submit query range.', JSON.stringify(selectedStore.typedList))
-  const res = get('birth_year_range?', { from: 1993, to: 2024 })
-  res.then((r) => {
-    myLogger.d('res,,', JSON.stringify(r))
+  const queryType = Number(selectedKeys.value[0])
+  const selectRanges = Array.from(selectedStore.typedList.values())
+  const rangesArr = selectRanges.map((range) => {
+    return { from: range.from, to: range.to }
   })
+  myLogger.d(`Submit query, queryType: ${queryType}, selectRanges: ${JSON.stringify(rangesArr)}`)
+
+  let promiseArr
+  switch (queryType) {
+    case 1:
+      myLogger.d('Query for birth year.')
+      // birth_year_range?from=1990&to=2004
+      promiseArr = rangesArr.map((pair) => get<ApiResponse>('birth_year_range?', { from: pair.from, to: pair.to }))
+      break
+    case 2:
+      myLogger.d('Query for miles.')
+      // mile_range?from=1284&to=14505
+      promiseArr = rangesArr.map((pair) => get<ApiResponse>('mile_range?', { from: pair.from, to: pair.to }))
+      break
+    case 3:
+      myLogger.d('Query for time.')
+      // mile_range?from=2&to=63
+      promiseArr = rangesArr.map((pair) => get<ApiResponse>('mile_range?', { from: pair.from, to: pair.to }))
+      break
+    default:
+      break
+  }
+  if (promiseArr) {
+    Promise.all(promiseArr).then((result: Awaited<ApiResult<ApiResponse>>[]) => {
+      // myLogger.d('Results for all: ', JSON.stringify(result))
+      display_data.push(...result)
+    })
+  }
+
 }
 
 const onDialogConfirmAction = () => {
@@ -83,6 +120,10 @@ const select_value: Ref<string[]> = ref([])
 
 const onSelectOption = (value: any) => {
   myLogger.d('Select option.', JSON.stringify(value))
+  const split = value.split('-')
+  const from = Number(split[0])
+  const to = Number(split[1])
+  selectedStore.add({ type: Number(selectedKeys.value[0]), from: from, to: to })
 }
 
 const onDeselectOption = (value: any) => {
@@ -92,6 +133,8 @@ const onDeselectOption = (value: any) => {
   const to = Number(split[1])
   selectedStore.remove({ type: Number(selectedKeys.value[0]), from: from, to: to })
 }
+
+const activeKey = ref('1');
 
 </script>
 
@@ -168,6 +211,31 @@ const onDeselectOption = (value: any) => {
           </div>
 
         </a-form>
+
+        <!--Tabs-->
+        <a-tabs v-model:activeKey="activeKey">
+
+          <a-tab-pane key="1" tab="Tab 1">
+            Content of tab 1
+          </a-tab-pane>
+
+          <a-tab-pane key="2" tab="Tab 2">
+            Content of tab 2
+          </a-tab-pane>
+
+          <a-tab-pane key="3" tab="Tab 3">
+            Content of tab 3
+          </a-tab-pane>
+
+          <template #leftExtra>
+            <a-button class="tabs-extra-demo-button">Left Extra Action</a-button>
+          </template>
+          <template #rightExtra>
+            <a-button>Right Extra Action</a-button>
+          </template>
+        </a-tabs>
+
+
       </a-layout-content>
 
       <!--  Root Content Layout  -->
@@ -250,6 +318,15 @@ html, body, #app {
 
 .ant-typography-single-line {
   white-space: nowrap;
+}
+
+.tabs-extra-demo-button {
+  margin-right: 16px;
+}
+
+.ant-row-rtl .tabs-extra-demo-button {
+  margin-right: 0;
+  margin-left: 16px;
 }
 </style>
 
