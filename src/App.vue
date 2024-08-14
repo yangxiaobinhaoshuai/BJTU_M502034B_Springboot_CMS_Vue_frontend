@@ -24,16 +24,17 @@ use([
 
 // TODO color
 provide(THEME_KEY, 'dark')
+// provide(THEME_KEY, 'light')
 
 const historicalStore = useHistoricalStore()
 const selectedStore = useSelectedStore()
 
-selectedStore.$subscribe((mutation, state) => {
+selectedStore.$subscribe(() => {
   myLogger.d('selectedStore state changed, new displayList ===> ', JSON.stringify(selectedStore.displayList))
   selectRanges.value = selectedStore.displayList
 })
 
-historicalStore.$subscribe((mutation, state) => {
+historicalStore.$subscribe(() => {
   const newHisVal = historicalStore.typedList.map(d => {
     return {
       // label: `${d.from}-${d.to}`,
@@ -45,15 +46,23 @@ historicalStore.$subscribe((mutation, state) => {
 })
 
 
-const selectedKeys = ref<string[]>(['1'])
+const currentQueryType = ref<string[]>(['1'])
 const collapsed = ref<boolean>(false)
 
-
-watch(selectedKeys, (newVal) => {
+// 查询类别变化
+watch(currentQueryType, (newVal) => {
   let type = Number(newVal[0])
-  myLogger.d('selectedStore changed to: ', JSON.stringify(type))
+  myLogger.d('queryTab changed to: ', JSON.stringify(type), JSON.stringify(currentQueryType))
   selectedStore.setType(type)
   historicalStore.setType(type)
+
+  // 清空已经查询的数据
+  myLogger.d('reset data cause tab index changed.')
+  listData.value = []
+  pie_option.value.series[0].data = []
+  bar_option.xAxis.data = []
+  bar_option.series[0].data = []
+  listRangeOptions.value = []
 })
 
 //  Range Dialog
@@ -93,7 +102,7 @@ watch([display_data, selectListRangeOption], ([newVal,newOpt]) => {
 })
 
 const onQuerySubmit = () => {
-  const queryType = Number(selectedKeys.value[0])
+  const queryType = Number(currentQueryType.value[0])
 
   const selectRanges = Array.from(selectedStore.typedList.values())
   const rangesArr = selectRanges.map((range) => {
@@ -144,7 +153,7 @@ const onQuerySubmit = () => {
 }
 
 const onDialogConfirmAction = () => {
-  const r = { type: Number(selectedKeys.value[0]), from: theCreatedRange.from, to: theCreatedRange.to }
+  const r = { type: Number(currentQueryType.value[0]), from: theCreatedRange.from, to: theCreatedRange.to }
   myLogger.d('Confirm range dialog.', JSON.stringify(r))
   selectedStore.add(r)
   historicalStore.add(r)
@@ -166,9 +175,6 @@ const onDismiss = () => {
   myLogger.d('Dismiss range selection.')
 }
 
-const handleSelectRangesChange = (value: string) => {
-  myLogger.d('Change range.', JSON.stringify(value))
-}
 
 // 输入框宽度
 const formLabelWidth = '140px'
@@ -185,7 +191,7 @@ const onSelectOption = (value: any) => {
   const split = value.split('-')
   const from = Number(split[0])
   const to = Number(split[1])
-  selectedStore.add({ type: Number(selectedKeys.value[0]), from: from, to: to })
+  selectedStore.add({ type: Number(currentQueryType.value[0]), from: from, to: to })
 }
 
 const onDeselectOption = (value: any) => {
@@ -193,7 +199,7 @@ const onDeselectOption = (value: any) => {
   const split = value.split('-')
   const from = Number(split[0])
   const to = Number(split[1])
-  selectedStore.remove({ type: Number(selectedKeys.value[0]), from: from, to: to })
+  selectedStore.remove({ type: Number(currentQueryType.value[0]), from: from, to: to })
 }
 
 // 当前 tab
@@ -271,7 +277,7 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
   const split = strRange.split('-')
   const from = split[0]
   const to = split[1]
-  const queryType = Number(selectedKeys.value[0])
+  const queryType = Number(currentQueryType.value[0])
   selectListRangeOption.value = new RangeData(queryType, from, to)
 }
 
@@ -283,7 +289,7 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
     <!-- The Slider-->
     <a-layout-sider v-model:collapsed="collapsed" collapsible>
       <div class="logo" />
-      <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
+      <a-menu v-model:selectedKeys="currentQueryType" theme="dark" mode="inline">
         <a-menu-item key="1">
           <span>按年龄范围查询</span>
         </a-menu-item>
@@ -330,7 +336,6 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
               :max-tag-text-length="maxTagTextLength"
               :options="historical_options"
               :style="{marginLeft: '30px',marginRight:10,paddingRight:20}"
-              @change="handleSelectRangesChange"
               @deselect="onDeselectOption"
               @select="onSelectOption"
             ></a-select>
