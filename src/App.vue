@@ -60,16 +60,17 @@ watch(currentQueryType, (newVal) => {
   myLogger.d('reset data cause tab index changed.')
   listData.value = []
   pie_option.value.series[0].data = []
-  bar_option.xAxis.data = []
-  bar_option.series[0].data = []
+  bar_option.value.xAxis.data = []
+  bar_option.value.series[0].data = []
   listRangeOptions.value = []
+  listCurrentSelectRange.value = undefined
 })
 
 //  Range Dialog
 const dialogFormVisible = ref(false)
 
 // 接口返回的要展示的数据
-const display_data = reactive<Array<ApiResponse>>([])
+const display_data = ref<Array<ApiResponse>>([])
 
 // 必须在 watch 之前 initialize
 // 当前展示 list 的范围
@@ -86,8 +87,8 @@ watch([display_data, selectListRangeOption], ([newVal,newOpt]) => {
   const xTitles = newVal.map((res: ApiResponse) => `${res.from} - ${res.to}`)
   const yData = newVal.map((res: ApiResponse) => res.data?.length || 0)
   myLogger.d(`bar chart, xTitles: ${xTitles}, yData: ${yData}.`)
-  bar_option.xAxis.data = xTitles
-  bar_option.series[0].data = yData
+  bar_option.value.xAxis.data = xTitles
+  bar_option.value.series[0].data = yData
 
   const listRange = selectListRangeOption.value
   myLogger.d("display list change, current list range Data: ", JSON.stringify(listRange))
@@ -134,7 +135,7 @@ const onQuerySubmit = () => {
   if (promiseArr) {
     Promise.all(promiseArr).then((result: Awaited<ApiResult<ApiResponse>>[]) => {
       // myLogger.d('Results for all: ', JSON.stringify(result))
-      display_data.push(...result)
+      display_data.value = result
     })
   }
 
@@ -237,7 +238,7 @@ const pie_option = ref({
   ]
 })
 
-const bar_option = {
+const bar_option = ref({
   xAxis: {
     type: 'category',
     data: []
@@ -251,7 +252,7 @@ const bar_option = {
       type: 'bar'
     }
   ]
-}
+})
 
 // 列表分页器
 const pagination = {
@@ -265,6 +266,8 @@ const pagination = {
 // 列表数据
 const listData = ref([])
 
+// 列表当前正在选择的范围
+const listCurrentSelectRange = ref(undefined)
 // 列表所有范围
 const listRangeOptions = ref<SelectProps['options']>([])
 
@@ -393,6 +396,7 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
           <template #leftExtra>
             <a-select class="listSpecialRangeSelection"
                       placeholder="请选择列表具体范围"
+                      v-model:value="listCurrentSelectRange"
                       label-in-value
                       style="width: 140px"
                       :options="listRangeOptions"
