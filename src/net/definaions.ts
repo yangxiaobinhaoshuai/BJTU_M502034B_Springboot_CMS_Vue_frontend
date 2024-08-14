@@ -1,14 +1,17 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios from 'axios'
 import myLogger from '@/log/MyLogger'
 
-const axiosInstance: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/traveler/',
-  timeout: 5000
+const axiosInstance = axios.create({
+  baseURL: 'http://api/traveler/',
+  timeout: 5000,
+  headers: {
+    'Access-Control-Allow-Origin': '*'
+  }
 })
 
 // 添加请求拦截器
 axiosInstance.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config) => {
     // 在发送请求之前做些什么
     return config
   },
@@ -21,7 +24,7 @@ axiosInstance.interceptors.request.use(
 
 // 添加响应拦截器
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => {
+  (response) => {
     // 对响应数据做点什么
     return response
   },

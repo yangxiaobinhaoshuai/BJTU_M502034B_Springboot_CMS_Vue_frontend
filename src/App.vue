@@ -41,8 +41,8 @@ watch(selectedKeys, (newVal) => {
 const dialogFormVisible = ref(false)
 const onQuerySubmit = () => {
   myLogger.d('Submit query range.', JSON.stringify(selectedStore.typedList))
-  // let res = get('birth_year_range?', { from: 1993, to: 2024 })
-  // myLogger.d("submit res : ",JSON.stringify(res))
+  let res = get('birth_year_range?', { from: 1993, to: 2024 })
+  myLogger.d("submit res : ",JSON.stringify(res))
 }
 
 const onDialogConfirmAction = () => {
