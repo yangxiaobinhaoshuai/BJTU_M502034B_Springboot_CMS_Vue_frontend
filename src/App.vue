@@ -62,7 +62,11 @@ const dialogFormVisible = ref(false)
 // 接口返回的要展示的数据
 const display_data = reactive<Array<ApiResponse>>([])
 
-watch(display_data, (newVal) => {
+// 必须在 watch 之前 initialize
+// 当前展示 list 的范围
+const selectListRangeOption = ref({})
+
+watch([display_data, selectListRangeOption], ([newVal,newOpt]) => {
   myLogger.d('watch for display_data new val: ', JSON.stringify(newVal.map(r => r.data?.length || 0)))
   // pie char
   pie_option.value.series[0].data = newVal.map((res: ApiResponse) => {
@@ -79,10 +83,12 @@ watch(display_data, (newVal) => {
   const listRange = selectListRangeOption.value
   myLogger.d("display list change, current list range Data: ", JSON.stringify(listRange))
   const index = newVal.findIndex((res => res.from == listRange.from && res.to == listRange.to))
+  myLogger.d('response index ', index)
   if (index >= 0) {
     const travelers = newVal[index].data
-    listData.value.push(...travelers)
-    myLogger.d('after insert listData:', JSON.stringify(listData))
+    //listData.value.push(...travelers)
+    listData.value = travelers
+    //myLogger.d('after insert listData:', JSON.stringify(listData))
   }
 })
 
@@ -256,8 +262,6 @@ const listData = ref([])
 // 列表所有范围
 const listRangeOptions = ref<SelectProps['options']>([])
 
-// 当前展示 list 的范围
-const selectListRangeOption = ref({})
 
 // 列表选择 callback
 const handleListRangeChange: SelectProps['onChange'] = value => {
