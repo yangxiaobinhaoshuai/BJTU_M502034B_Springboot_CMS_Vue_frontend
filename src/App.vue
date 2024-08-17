@@ -12,6 +12,7 @@ import { BarChart, PieChart } from 'echarts/charts'
 import { LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import VChart, { THEME_KEY } from 'vue-echarts'
 import RangeData from './pojo/RangeData'
+import _ from 'lodash'
 
 use([
   CanvasRenderer,
@@ -154,8 +155,39 @@ const onQuerySubmit = () => {
 }
 
 const onDialogConfirmAction = () => {
-  const r = { type: Number(currentQueryType.value[0]), from: theCreatedRange.from, to: theCreatedRange.to }
-  myLogger.d('Confirm range dialog.', JSON.stringify(r))
+
+  const queryType = Number(currentQueryType.value[0])
+  const r = { type: queryType, from: theCreatedRange.from, to: theCreatedRange.to }
+  myLogger.d('Confirm range dialog.', JSON.stringify(r), _.isNumber(theCreatedRange.from), _.isNumber(theCreatedRange.to))
+
+  if (isNaN(Number(theCreatedRange.from)) || isNaN(Number(theCreatedRange.to))) {
+    alert('请输入数字')
+    theCreatedRange.from = 0
+    theCreatedRange.to = 0
+    return
+  }
+
+  // 时间不可以重复
+  if (queryType == 3){
+    const overlayIndex = historicalStore.typedList.findIndex(
+      r => {
+
+        const res = (Number(theCreatedRange.from) < Number(r.to) && theCreatedRange.from > Number(r.from)) ||
+          (Number(theCreatedRange.to) < Number(r.to) && Number(theCreatedRange.to) > Number(r.from))
+
+        if (res) myLogger.d('find overlay', JSON.stringify(theCreatedRange), JSON.stringify(r))
+        return res
+      }
+    )
+    myLogger.d('overlayIndex:', overlayIndex)
+    if (overlayIndex >= 0){
+      alert('范围冲突')
+      theCreatedRange.from = 0
+      theCreatedRange.to = 0
+      return
+    }
+  }
+
   selectedStore.add(r)
   historicalStore.add(r)
   dialogFormVisible.value = false
@@ -380,7 +412,7 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
         <!--Tabs-->
         <a-tabs v-model:activeKey="activeTabIndex">
 
-          <a-tab-pane key="1" tab="Tab 1">
+          <a-tab-pane key="1" tab="列表">
 
             <!-- List -->
             <a-list item-layout="vertical" size="small" :pagination="pagination" :data-source="listData">
@@ -401,11 +433,11 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
 
           </a-tab-pane>
 
-          <a-tab-pane key="2" tab="Tab 2">
+          <a-tab-pane key="2" tab="饼图">
             <v-chart class="chart" :option="pie_option" autoresize />
           </a-tab-pane>
 
-          <a-tab-pane key="3" tab="Tab 3">
+          <a-tab-pane key="3" tab="柱图">
             <v-chart class="chart" :option="bar_option" autoresize />
           </a-tab-pane>
 
