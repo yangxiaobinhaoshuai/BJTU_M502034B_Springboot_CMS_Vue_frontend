@@ -332,6 +332,11 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
   selectListRangeOption.value = new RangeData(queryType, from, to)
 }
 
+function getGenderName(genderInt) {
+  if (genderInt == 0) return '男'
+  else return '女'
+}
+
 </script>
 
 <template>
@@ -422,7 +427,9 @@ const handleListRangeChange: SelectProps['onChange'] = value => {
                   <a-list-item-meta>
                     <template #title>
                       <a :href="item.href">
-                        {{ item }}
+                        <!--                        {{ `${JSON.stringify(item)}` }}-->
+                        {{ `id:${item.id}   性别:${getGenderName(item.gender)}   出生年份: ${item.birthYear}   飞行里程: ${item.totalTravelMiles}   飞行时间: ${item.totalTravelTime}`
+                        }}
                       </a>
                     </template>
                   </a-list-item-meta>
