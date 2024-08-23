@@ -1,5 +1,9 @@
 # bjtu_cms_front_end
 
+see [Record](RECORD.md)
+see [Spring boot java back end](https://github.com/yangxiaobinhaoshuai/BJTU_M502034B_Springboot_CMS_Java_backend)
+
+
 This template should help get you started developing with Vue 3 in Vite.
 
 ## Recommended IDE Setup
